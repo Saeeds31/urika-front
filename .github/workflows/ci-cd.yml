@@ -1,0 +1,84 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - production
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: "16"
+
+      - name: Install Dependencies
+        run: npm install
+
+      - name: Build Project
+        run: npm run build
+
+      - name: Zip Build Directory
+        run: zip -r build-artifacts.zip .output/*
+
+      - name: Upload Build Artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: build-artifacts
+          path: build-artifacts.zip
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build
+
+    steps:
+      - name: Setup SSH
+        run: |
+          set -x
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -p 9011 -H 87.248.145.25 >> ~/.ssh/known_hosts
+
+      - name: Download Build Artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: build-artifacts
+          path: ./downloaded-build
+
+      - name: Deploy to Server
+        run: |
+          scp -P 9011 ./downloaded-build/build-artifacts.zip root@87.248.145.25:/home/urika.ir/
+
+      - name: Unzip Archive on Server
+        run: |
+          ssh -p 9011 root@87.248.145.25 'cd /home/urika.ir/ && unzip -o build-artifacts.zip -d temp_dir'
+
+      - name: Delete Existing PM2 Process
+        run: |
+          ssh -p 9011 root@87.248.145.25 'pm2 list | grep urika-front && pm2 delete urika-front || echo "Process not found"'
+
+      - name: Move Extracted Files to Parent Directory
+        run: |
+          ssh -p 9011 root@87.248.145.25 'cd /home/urika.ir/temp_dir/.output && rm -rf ../../public ../../server && mv -f * ../..'
+
+      - name: Clean Up Temporary Directories
+        run: |
+          ssh -p 9011 root@87.248.145.25 'rm -rf /home/urika.ir/temp_dir'
+
+      - name: Remove ZIP File from Server
+        run: |
+          ssh -p 9011 root@87.248.145.25 'rm /home/urika.ir/build-artifacts.zip'
+
+      - name: Start PM2 on Server
+        run: |
+          ssh -p 9011 root@87.248.145.25 'pm2 start /home/urika.ir/server/index.mjs --name "urika-front"'
+
+      - name: Save PM2
+        run: |
+          ssh -p 9011 root@87.248.145.25 'pm2 startup && pm2 save'

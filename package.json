@@ -1,0 +1,39 @@
+{
+  "name": "urika",
+  "private": true,
+  "type": "module",
+  "version": "2.0.1",
+  "scripts": {
+    "build": "nuxt build",
+    "start": "nuxt start",
+    "dev": "nuxt dev",
+    "generate": "nuxt generate",
+    "preview": "nuxt preview",
+    "postinstall": "nuxt prepare"
+  },
+  "dependencies": {
+    "@mdi/font": "^7.4.47",
+    "@mdi/js": "^7.4.47",
+    "@nuxtjs/dotenv": "^1.4.2",
+    "@tato30/vue-pdf": "^1.11.1",
+    "@vite-pwa/nuxt": "^0.9.1",
+    "@vueuse/motion": "^2.2.3",
+    "js-cookie": "^3.0.5",
+    "nuxt": "^3.12.2",
+    "pdf-lib": "^1.17.1",
+    "pdf-viewer": "^0.8.1",
+    "pdfjs-dist": "^4.6.82",
+    "vue": "^3.4.29",
+    "vue-pdf": "^4.3.0",
+    "vue-pdf-embed": "^2.1.0",
+    "vue-router": "^4.3.3",
+    "vuetify-pdf-viewer": "^1.0.2",
+    "wavesurfer.js": "^7.8.4"
+  },
+  "devDependencies": {
+    "sass": "^1.77.6",
+    "vite-plugin-pwa": "^0.20.1",
+    "vite-plugin-vuetify": "^2.0.3",
+    "vuetify": "^3.6.10"
+  }
+}
