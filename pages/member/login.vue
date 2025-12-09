@@ -123,7 +123,7 @@ export default {
       await this.post(API_ENDPOINTS.auth.sendCode, payload).then((x) => {
         self.step = 2;
         self.snackbarText = x.messages;
-        this.notExist = !x.exist;
+        this.notExist = !x.data?.exist;
         self.showSnackbar = true;
         self.isButtonInLoading = false;
       });

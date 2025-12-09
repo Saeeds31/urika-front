@@ -79,7 +79,7 @@
           مشاهده همه
         </NuxtLink>
       </div>
-      <v-slide-group v-model="cards" class="" center-active show-arrows icon>
+      <v-slide-group v-model="cards" v-if="homeGetModel" class="" center-active show-arrows icon>
         <v-slide-group-item v-for="card in homeGetModel.soundbooks">
           <ProductCard
             :product="card"
@@ -115,7 +115,7 @@
           مشاهده همه
         </NuxtLink>
       </div>
-      <v-slide-group v-model="cards" center-active show-arrows icon>
+      <v-slide-group v-model="cards" v-if="homeGetModel" center-active show-arrows icon>
         <v-slide-group-item v-for="card in homeGetModel.podcasts">
           <ProductCard
             :product="card"
@@ -160,7 +160,7 @@
           مشاهده همه
         </NuxtLink>
       </div>
-      <v-slide-group v-model="cards" center-active show-arrows icon>
+      <v-slide-group v-model="cards" v-if="homeGetModel" center-active show-arrows icon>
         <v-slide-group-item v-for="card in homeGetModel.ebooks">
           <ProductCard
             :product="card"
@@ -187,34 +187,23 @@
   </VContainer>
 </template>
 
-<script lang="ts">
+<script setup lang="ts">
 import { API_ENDPOINTS } from "~/utilities/apiEndpoints";
-import { useCustomFetch } from "../composables/useCustomFetch";
+import { useCustomFetch } from "~/composables/useCustomFetch";
 import type { HomeGetModel } from "~/types/homeGetModel";
 import { PRODUCT_TYPES } from "~/utilities/constants";
-import { onMounted } from "vue";
 
-export default {
-  async setup() {
-    let homeGetModel;
-    const { get } = useCustomFetch();
-    await get<HomeGetModel>(API_ENDPOINTS.home.get).then((x) => {
-      homeGetModel = x.data != null ? reactive<HomeGetModel>(x.data) : null;
-    });
-    // const route = useRoute();
-    const productType = "podcasts"; //route.params.type as string;
-    const pageTitle = PRODUCT_TYPES[productType].title;
-    const pageIcon = PRODUCT_TYPES[productType].iconUrl;
-    const pageGetUrl = PRODUCT_TYPES[productType].getUrl;
-    useHead({
-      title: `صفحه نخست`,
-    });
-    return {
-      pageTitle,
-      homeGetModel,
-      pageIcon,
-      PRODUCT_TYPES,
-    };
-  },
-};
+const { get } = useCustomFetch();
+
+const { data } = await get<HomeGetModel>(API_ENDPOINTS.home.get);
+
+const homeGetModel = data ? reactive<HomeGetModel>(data) : null;
+
+const productType = "podcasts";
+const pageTitle = PRODUCT_TYPES[productType].title;
+const pageIcon = PRODUCT_TYPES[productType].iconUrl;
+
+useHead({
+  title: "صفحه نخست",
+});
 </script>
