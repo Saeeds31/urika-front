@@ -21,6 +21,9 @@ export default function useBottomAudioPlayer() {
   );
   const { post } = useCustomFetch();
   const isPaused = ref(true);
+  const lastProductPlayed = ref(null);
+  const timerVal = ref(null);
+  const playedTime = ref(0);
   const audioUrl = ref(bottomAudioComponentModel?.value?.url);
   const playedDuration = ref("00:00");
   const duration = ref("00:00");
@@ -28,11 +31,13 @@ export default function useBottomAudioPlayer() {
   function play() {
     try {
       waveSurferInstance.value.play();
+      handlerPlayTime();
     } catch {}
   }
   function pause() {
     try {
       waveSurferInstance.value.pause();
+      clearInterval(timerVal.value);
     } catch {}
   }
   const options = {
@@ -88,9 +93,9 @@ export default function useBottomAudioPlayer() {
     isInDownloading.value = true;
     let payload = { id: productId, type: productType, episodeId: episodeId };
     post(API_ENDPOINTS.getFileToPlayData, payload).then((x) => {
-      x?.data?.contentType == 3
-        ? (x.data.contentType = "audiobooks")
-        : (x.data.contentType = "podcasts");
+      let contentType = x?.data?.contentType == 3 ? "audiobooks" : "podcasts";
+      handlerPlayTime(productId, contentType);
+      x.data.contentType = contentType;
       if (latestPlayedSoccond > 0)
         x.data.latestPlayedSoccond = latestPlayedSoccond;
       setCurrentAudio(x?.data);
@@ -140,11 +145,35 @@ export default function useBottomAudioPlayer() {
     bottomAudioComponentModel.value = emptyBottomAudioModel;
     saveInLocalStorage(emptyBottomAudioModel);
     audioUrl.value = "";
+    clearInterval(timerVal.value);
   }
   function saveInLocalStorage(model: BottomAudioModel) {
     window.localStorage.setItem("bottomAudioData", JSON.stringify(model));
   }
-
+  function handlerPlayTime(productId = null, contentType = null) {
+    if (lastProductPlayed.value != productId) {
+      lastProductPlayed.value = productId;
+      clearInterval(timerVal.value);
+      playedTime.value = 0;
+      timerVal.value = setInterval(() => {
+        playedTime.value++;
+        let payload = {
+          id: productId,
+          time: playedTime.value,
+        };
+        post(API_ENDPOINTS[contentType].studyTime, payload);
+      }, 60000);
+    } else if (productId == null) {
+      timerVal.value = setInterval(() => {
+        playedTime.value++;
+        let payload = {
+          id: lastProductPlayed.value,
+          time: playedTime.value,
+        };
+        post(API_ENDPOINTS[contentType].studyTime, payload);
+      }, 60000);
+    }
+  }
   return {
     setCurrentAudio,
     closeAudioPlayer,

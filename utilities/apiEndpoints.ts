@@ -27,6 +27,7 @@ export const API_ENDPOINTS = {
   },
   podcasts: {
     get: "/podcasts",
+    studyTime: "/podcastsUpdatePlayTime",
     getById: (id: number) => `/podcasts/${id}`,
     sendComment: (id: number) => `/podcasts/${id}/comments`,
     getEpisode: (podcastId: number, episodId: number) =>
@@ -43,6 +44,7 @@ export const API_ENDPOINTS = {
   },
   audiobooks: {
     get: "/soundbooks",
+    studyTime: "/soundbooksUpdatePlayTime",
     getById: (id: number) => `/soundbooks/${id}`,
     sendComment: (id: number) => `/soundbooks/${id}/comments`,
     getEpisode: (podcastId: number, episodId: number) =>
