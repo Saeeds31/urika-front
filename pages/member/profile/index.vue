@@ -12,22 +12,14 @@
             <template v-slot="text">
               <div class="d-flex justify-space-between contetn-of-profile">
                 <div>نام</div>
-                <div
-                  class="font-weight-bold"
-                  @click="profileEditModal.isVisible = true"
-                >
-                  <span class="ml-2 opacity-30"
-                    ><v-icon size="15">mdi-pencil</v-icon></span
-                  >
-                  <span
-                    v-if="
-                      profileModel?.first_name != null ||
-                      profileModel?.last_name != null
-                    "
-                  >
+                <div class="font-weight-bold" @click="profileEditModal.isVisible = true">
+                  <span class="ml-2 opacity-30"><v-icon size="15">mdi-pencil</v-icon></span>
+                  <span v-if="
+                    profileModel?.first_name != null ||
+                    profileModel?.last_name != null
+                  ">
                     {{ profileModel?.first_name }}
-                    {{ profileModel?.last_name }}</span
-                  >
+                    {{ profileModel?.last_name }}</span>
                   <span v-else>ثبت نشده</span>
                 </div>
               </div>
@@ -152,36 +144,17 @@
           <p>ویرایش اطلاعات</p>
         </div>
 
-        <v-btn
-          icon="mdi-close"
-          variant="text"
-          @click="profileEditModal.isVisible = false"
-        ></v-btn>
+        <v-btn icon="mdi-close" variant="text" @click="profileEditModal.isVisible = false"></v-btn>
       </v-card-title>
 
       <v-divider class="mb-1"></v-divider>
 
       <v-card-text class="pb-2 px-3">
-        <v-text-field
-          label="نام"
-          variant="outlined"
-          persistent-hint
-          v-model="profileEditModal.name"
-        ></v-text-field>
-        <v-text-field
-          label="نام خانوادگی"
-          variant="outlined"
-          v-model="profileEditModal.lastName"
-          hide-details
-        ></v-text-field>
-        <v-btn
-          class="font-weight-black mt-4 mb-2"
-          block
-          color="primary"
-          variant="elevated"
-          :loading="profileEditModal.isSaveButtonLoading"
-          @click="updateProfile"
-        >
+        <v-text-field label="نام" variant="outlined" persistent-hint v-model="profileEditModal.name"></v-text-field>
+        <v-text-field label="نام خانوادگی" variant="outlined" v-model="profileEditModal.lastName"
+          hide-details></v-text-field>
+        <v-btn class="font-weight-black mt-4 mb-2" block color="primary" variant="elevated"
+          :loading="profileEditModal.isSaveButtonLoading" @click="updateProfile">
           <v-icon class="ml-1">mdi-content-save-check</v-icon>
           ذخیره
         </v-btn>
@@ -189,7 +162,7 @@
     </v-card>
   </v-dialog>
 </template>
-<script>
+<script setup>
 import { API_ENDPOINTS } from "~/utilities/apiEndpoints";
 import useLoading from "~/composables/useLoading";
 import Cookies from "js-cookie";
@@ -198,49 +171,46 @@ import { ROUTES } from "~/utilities/routes";
 definePageMeta({
   middleware: "auth",
 });
-export default {
-  async setup() {
-    const { get, post } = useCustomFetch();
-    const profileEditModal = reactive({
-      isVisible: false,
-      isSaveButtonLoading: false,
-      name: "",
-      lastName: "",
+
+const { get, post } = useCustomFetch();
+const { startLoading } = useLoading();
+const profileEditModal = reactive({
+  isVisible: false,
+  isSaveButtonLoading: false,
+  name: "",
+  lastName: "",
+});
+let profileModel;
+get(API_ENDPOINTS.profile.get).then((x) => {
+  profileModel = reactive(x.data);
+  profileEditModal.name = profileModel?.first_name ?? "";
+  profileEditModal.lastName = profileModel?.last_name ?? "";
+});
+function logoutUser() {
+  startLoading();
+  post(API_ENDPOINTS.auth.logout).then((x) => {
+    Cookies.remove("authToken");
+    navigateTo(ROUTES.MEMBER.LOGIN);
+  });
+}
+function updateProfile() {
+  profileEditModal.isSaveButtonLoading = true;
+  let payload = {
+    first_name: profileEditModal.name,
+    last_name: profileEditModal.lastName,
+  };
+  post(API_ENDPOINTS.profile.save, payload)
+    .then((x) => {
+      profileEditModal.isVisible = false;
+    })
+    .finally(() => {
+      profileEditModal.isSaveButtonLoading = false;
     });
-    let profileModel;
-    await get(API_ENDPOINTS.profile.get).then((x) => {
-      profileModel = reactive(x.data);
-      profileEditModal.name = profileModel?.first_name ?? "";
-      profileEditModal.lastName = profileModel?.last_name ?? "";
-    });
-    function logoutUser() {
-      const { startLoading } = useLoading();
-      startLoading();
-      post(API_ENDPOINTS.auth.logout).then((x) => {
-        Cookies.remove("authToken");
-        navigateTo(ROUTES.MEMBER.LOGIN);
-      });
-    }
-    function updateProfile() {
-      profileEditModal.isSaveButtonLoading = true;
-      let payload = {
-        first_name: profileEditModal.name,
-        last_name: profileEditModal.lastName,
-      };
-      post(API_ENDPOINTS.profile.save, payload)
-        .then((x) => {
-          profileEditModal.isVisible = false;
-        })
-        .finally(() => {
-          profileEditModal.isSaveButtonLoading = false;
-        });
-    }
-    useHead({
-      title: `پروفایل`,
-    });
-    return { logoutUser, profileModel, profileEditModal, updateProfile };
-  },
-};
+}
+useHead({
+  title: `پروفایل`,
+});
+
 </script>
 <style>
 .v-list-item__prepend {
