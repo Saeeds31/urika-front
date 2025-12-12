@@ -163,7 +163,7 @@ import { useCustomFetch } from '../../../../composables/useCustomFetch';
                 ? '140px'
                 : '170px',
         }">
-          <v-list lines="two">
+          <v-list class="height80" lines="two" >
             <v-list-subheader inset class="mr-2 mb-3">لیست اپیزود های
               <strong class="font-weight-black">{{
                 product?.name
@@ -278,6 +278,9 @@ import { useCustomFetch } from '../../../../composables/useCustomFetch';
   .v-container {
     padding: 0 !important;
   }
+}
+.height80{
+  height: 80vh;
 }
 </style>
 <script lang="ts" setup>

@@ -23,7 +23,6 @@ export default function useBottomAudioPlayer() {
   const isPaused = ref(true);
   const lastProductPlayed = ref(null);
   const timerVal = ref(null);
-  const playedTime = ref(0);
   const audioUrl = ref(bottomAudioComponentModel?.value?.url);
   const playedDuration = ref("00:00");
   const duration = ref("00:00");
@@ -154,21 +153,16 @@ export default function useBottomAudioPlayer() {
     if (lastProductPlayed.value != productId) {
       lastProductPlayed.value = productId;
       clearInterval(timerVal.value);
-      playedTime.value = 0;
       timerVal.value = setInterval(() => {
-        playedTime.value++;
         let payload = {
           id: productId,
-          time: playedTime.value,
         };
         post(API_ENDPOINTS[contentType].studyTime, payload);
       }, 60000);
     } else if (productId == null) {
       timerVal.value = setInterval(() => {
-        playedTime.value++;
         let payload = {
           id: lastProductPlayed.value,
-          time: playedTime.value,
         };
         post(API_ENDPOINTS[contentType].studyTime, payload);
       }, 60000);
