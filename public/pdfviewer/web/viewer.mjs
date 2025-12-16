@@ -3467,14 +3467,14 @@ const PDFViewerApplication = {
   }
 };
 {
-  const HOSTED_VIEWER_ORIGINS = ["null", "http://mozilla.github.io", "https://mozilla.github.io"];
+  const HOSTED_VIEWER_ORIGINS = ["null", "http://mozilla.github.io", "https://mozilla.github.io","https://urika.ir/","https://www.urika.ir/","https://api.urika.ir/"];
   var validateFileURL = function (file) {
     if (!file) {
       return;
     }
     try {
       const viewerOrigin = new URL(window.location.href).origin || "null";
-      if (HOSTED_VIEWER_ORIGINS.includes(viewerOrigin)) {
+      if (!HOSTED_VIEWER_ORIGINS.includes(viewerOrigin)) {
         return;
       }
       const fileOrigin = new URL(file, window.location.href).origin;
