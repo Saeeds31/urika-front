@@ -1,38 +1,21 @@
 <template>
   <div>
     <div v-show="loading">
-      <div
-        class="d-flex align-center justify-center"
-        style="height: calc(100vh - 125px); width: 100%"
-      >
+      <div class="d-flex align-center justify-center" style="height: calc(100vh - 125px); width: 100%">
         <div class="">
           <div class="">
-            <v-progress-circular
-              color="primary"
-              indeterminate
-            ></v-progress-circular>
+            <v-progress-circular color="primary" indeterminate></v-progress-circular>
           </div>
         </div>
       </div>
     </div>
-    <div class="position-relative">
-      <button
-        v-show="!loading"
-        @click="closeBook"
-        style="left: 50px; top: 4.5px; z-index: 999; position: absolute"
-        :style="{ color: isDarkMode ? 'white' : 'black' }"
-      >
+    <div id="pdfReaderSection" class="position-relative">
+      <button v-show="!loading" @click="closeBook" style="left: 50px; top: 4.5px; z-index: 999; position: absolute"
+        :style="{ color: isDarkMode ? 'white' : 'black' }">
         <v-icon size="17" style="vertical-align: -4px">mdi-close-thick</v-icon>
         بستن
       </button>
-      <iframe
-        v-show="!loading"
-        :src="viewerUrl"
-        width="100%"
-        height="600px"
-        @load="onLoad"
-        ref="pdfViewer"
-      ></iframe>
+      <iframe v-show="!loading" :src="viewerUrl" width="100%" height="600px" @load="onLoad" ref="pdfViewer"></iframe>
     </div>
   </div>
 </template>
@@ -53,7 +36,10 @@ export default {
     const isDarkMode = ref(false);
 
     const loadPdf = () => {
-      viewerUrl.value = `/pdfviewer/web/viewer.html?file=${props.src}`;
+      viewerUrl.value = `/pdfviewer/web/viewer.html?file=${props.src}&v=v1`;
+      setTimeout(() => {
+        document.getElementById('pdfReaderSection').scrollIntoView({ behavior: 'smooth' })
+      }, 2000);
     };
     const checkDarkMode = () => {
       isDarkMode.value = window.matchMedia(

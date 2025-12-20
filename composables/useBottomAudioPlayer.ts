@@ -13,6 +13,7 @@ const emptyBottomAudioModel: BottomAudioModel = {
   episodeTitle: "",
   imageUrl: "",
 };
+const playbackRate = ref(1);
 const isInDownloading = ref(false);
 const downloadedPrecent = ref(0);
 export default function useBottomAudioPlayer() {
@@ -69,6 +70,15 @@ export default function useBottomAudioPlayer() {
   const handlePause = () => {
     isPaused.value = true;
   };
+  function changePlaybackRate(rate: number) {
+    playbackRate.value = rate;
+    try {
+      const audio = waveSurferInstance.value?.getMediaElement?.();
+      if (audio) {
+        audio.playbackRate = rate;
+      }
+    } catch {}
+  }
   function formatTime(seconds) {
     const minutes = Math.floor(seconds / 60);
     const secs = Math.floor(seconds % 60);
@@ -119,6 +129,12 @@ export default function useBottomAudioPlayer() {
         isInDownloading.value = false;
       }, 500);
     }
+    try {
+      const audio = waveSurferInstance.value?.getMediaElement?.();
+      if (audio) {
+        audio.playbackRate = playbackRate.value;
+      }
+    } catch {}
   };
 
   const handleWaveSurfer = (ws) => {
@@ -177,6 +193,8 @@ export default function useBottomAudioPlayer() {
     handleReady,
     handleTimeUpdate,
     handlePause,
+    changePlaybackRate,
+    playbackRate,
     handlePlay,
     options,
     audioUrl,
