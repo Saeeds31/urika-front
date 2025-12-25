@@ -1,24 +1,18 @@
 <template>
-  <div>
-    <div v-show="loading">
-      <div class="d-flex align-center justify-center" style="height: calc(100vh - 125px); width: 100%">
-        <div class="">
-          <div class="">
-            <v-progress-circular color="primary" indeterminate></v-progress-circular>
-          </div>
-        </div>
-      </div>
+  <div v-show="true" class="pdf-wrapper">
+    <div v-show="loading" class="loading-wrapper">
+      <v-progress-circular color="primary" indeterminate />
     </div>
-    <div id="pdfReaderSection" class="position-relative">
-      <button v-show="!loading" @click="closeBook" style="left: 50px; top: 4.5px; z-index: 999; position: absolute"
-        :style="{ color: isDarkMode ? 'white' : 'black' }">
-        <v-icon size="17" style="vertical-align: -4px">mdi-close-thick</v-icon>
-        بستن
-      </button>
-      <iframe v-show="!loading" :src="viewerUrl" width="100%" height="600px" @load="onLoad" ref="pdfViewer"></iframe>
-    </div>
+
+    <button v-show="!loading" class="close-btn" @click="closeBook">
+      <v-icon size="18">mdi-close-thick</v-icon>
+      بستن
+    </button>
+
+    <iframe v-show="!loading" :src="viewerUrl" @load="onLoad"></iframe>
   </div>
 </template>
+
 
 <script>
 import { ref, onMounted, watch, defineEmits } from "vue";
@@ -79,5 +73,41 @@ export default {
 <style>
 iframe {
   height: calc(100vh - 115px) !important;
+}
+
+.pdf-wrapper {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  background: #fff;
+  z-index: 9999;
+  overflow: hidden;
+}
+
+iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+}
+
+.loading-wrapper {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: white;
+  z-index: 2;
+}
+
+.close-btn {
+  position: absolute;
+  top: 10px;
+  left: 15px;
+  z-index: 10;
+  background: transparent;
+  border: none;
+  cursor: pointer;
 }
 </style>
