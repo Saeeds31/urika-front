@@ -163,11 +163,11 @@ import { useCustomFetch } from '../../../../composables/useCustomFetch';
                 ? '140px'
                 : '170px',
         }">
-          <v-list class="height80" lines="two" >
+          <v-list class="height80" lines="two">
             <v-list-subheader inset class="mr-2 mb-3">لیست اپیزود های
               <strong class="font-weight-black">{{
                 product?.name
-                }}</strong></v-list-subheader>
+              }}</strong></v-list-subheader>
 
             <v-list-item v-for="(episode, index) in product?.episodes" :key="episode.id" :subtitle="episode.time"
               :title="episode.title" class="episode-item" :class="{
@@ -279,7 +279,8 @@ import { useCustomFetch } from '../../../../composables/useCustomFetch';
     padding: 0 !important;
   }
 }
-.height80{
+
+.height80 {
   height: 80vh;
 }
 </style>
@@ -351,7 +352,7 @@ isFavorite.value = product?.is_favorited ?? false;
 
 function startBookReading() {
   if (PRODUCT_TYPE == PRODUCT_TYPES.ebooks.typeName && product.value?.is_bought) {
-    pdfComponentSrc.value = product.value.origina_file;
+    pdfComponentSrc.value = product.value.original_path;
     isEbookOpen.value = true;
   }
 }

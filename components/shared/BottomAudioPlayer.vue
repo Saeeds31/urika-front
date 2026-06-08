@@ -79,7 +79,7 @@
           </div>
         </div>
       </div>
-      <div v-show="!isInDownloading">
+      <div :style="{ opacity: isInDownloading ? 0.4 : 1, pointerEvents: isInDownloading ? 'none' : 'auto' }">
         <WaveSurferPlayer :options="options" :file="bottomAudioComponentModel.url" @play="handlePlay"
           @pause="handlePause" @ready="handleReady" @waveSurfer="handleWaveSurfer" @progress="handleProgress"
           @timeupdate="handleTimeUpdate" />

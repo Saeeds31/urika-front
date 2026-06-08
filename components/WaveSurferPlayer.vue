@@ -1,90 +1,91 @@
 <template>
-  <div ref="waveform" class="waveform"></div>
+  <div class="waveform">
+    <div v-if="!isReady" class="loading-state">
+      <v-progress-linear indeterminate color="primary" class="mt-2" />
+      <span>در حال آماده‌سازی...</span>
+    </div>
+
+    <div v-show="isReady" class="simple-controls">
+      <!-- اینجا هر UI که داری رو بذار -->
+      <slot />
+    </div>
+  </div>
 </template>
 
 <script setup>
 import { ref, onMounted, onBeforeUnmount, watch } from "vue";
-import WaveSurfer from "wavesurfer.js";
+import { Howl } from "howler";
 
 const props = defineProps({
-  options: Object,
   file: String,
+  options: Object,
 });
 
 const emit = defineEmits([
-  "play",
-  "pause",
-  "timeupdate",
-  "ready",
-  "waveSurfer",
-  "progress",
+  "play", "pause", "timeupdate", "ready", "waveSurfer", "progress",
 ]);
 
-const waveform = ref(null); // Reference to the waveform element
-const waveSurfer = ref(null);
-var latestDownloadedPercentage = -1;
-var lastTime = -1;
-let xhrRequest = null;
+const isReady = ref(false);
+let sound = null;
+let progressInterval = null;
 
-const loadWaveSurfer = () => {
-  if (waveSurfer.value) {
-    waveSurfer.value.destroy();
+const loadSound = () => {
+  if (sound) {
+    sound.unload();
+    clearInterval(progressInterval);
   }
+  isReady.value = false;
 
-  waveSurfer.value = WaveSurfer.create({
-    container: waveform.value, // Correctly assign the waveform reference
-    ...props.options,
-  });
+  if (!props.file) return;
 
-  waveSurfer.value.on("ready", () => {
-    emit("ready", waveSurfer.value.getDuration());
-    emit("waveSurfer", waveSurfer.value);
+  sound = new Howl({
+    src: [props.file],
+    html5: true,       // ← کلید اصلی: stream میکنه، منتظر دانلود کامل نمیمونه
+    preload: true,
+    format: ['mp3'],
+    onload: () => {
+      isReady.value = true;
+      emit("ready", sound.duration());
+      // یه object با همون API که قبلاً داشتی بفرست
+      emit("waveSurfer", {
+        play: () => sound.play(),
+        pause: () => sound.pause(),
+        getCurrentTime: () => sound.seek(),
+        getDuration: () => sound.duration(),
+        isPlaying: () => sound.playing(),
+        seekTo: (progress) => sound.seek(progress * sound.duration()),
+        stop: () => sound.stop(),
+      });
+    },
+    onplay: () => {
+      emit("play");
+      // هر ثانیه timeupdate بزن
+      progressInterval = setInterval(() => {
+        emit("timeupdate", sound.seek());
+      }, 1000);
+    },
+    onpause: () => {
+      emit("pause");
+      clearInterval(progressInterval);
+    },
+    onstop: () => {
+      clearInterval(progressInterval);
+    },
+    onend: () => {
+      clearInterval(progressInterval);
+    },
+    onloaderror: (id, err) => {
+      console.error("Howler load error:", err);
+    },
   });
-
-  waveSurfer.value.on("play", () => emit("play"));
-  waveSurfer.value.on("pause", () => emit("pause"));
-  waveSurfer.value.on("audioprocess", () => {
-    if (Math.floor(waveSurfer.value.getCurrentTime()) != lastTime) {
-      emit("timeupdate", waveSurfer.value.getCurrentTime());
-      lastTime = Math.floor(waveSurfer.value.getCurrentTime());
-    }
-  });
-  waveSurfer.value.on("interaction", (progress) => {
-    emit("timeupdate", waveSurfer.value.getCurrentTime());
-  });
-
-  waveSurfer.value.on("loading", (progress) => {
-    if (progress != latestDownloadedPercentage) {
-      emit("progress", progress);
-      latestDownloadedPercentage = progress;
-    }
-  });
-  if (props.file != null && props.file.length > 5)
-    waveSurfer.value.load(props.file);
 };
 
-onMounted(() => {
-  loadWaveSurfer();
-});
-
+onMounted(() => loadSound());
 onBeforeUnmount(() => {
-  if (waveSurfer.value) {
-    waveSurfer.value.destroy();
-  }
+  if (sound) sound.unload();
+  clearInterval(progressInterval);
 });
-
-watch(
-  () => props.file,
-  (newFile) => {
-    if (newFile && waveSurfer.value) {
-      loadWaveSurfer();
-    }
-  }
-);
+watch(() => props.file, (newFile) => {
+  if (newFile) loadSound();
+});
 </script>
-
-<style>
-.waveform {
-  width: 100%;
-}
-</style>

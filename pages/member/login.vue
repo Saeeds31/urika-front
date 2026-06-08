@@ -139,7 +139,9 @@ export default {
         firstName: this.firstName,
         lastName: this.lastName,
       };
-      await this.post(API_ENDPOINTS.auth.smsLogin, payload).then((x) => {
+      try {
+        let x = await this.post(API_ENDPOINTS.auth.smsLogin, payload)
+
         if (x.status == "successful" && x.data?.access_token.length) {
           self.step = 3;
           self.isButtonInLoading = false;
@@ -148,9 +150,9 @@ export default {
           expires.setTime(expires.getTime() + 30 * 24 * 60 * 60 * 1000); // 7 روز
           Cookies.set("authToken", x.data?.access_token, {
             expires: expires,
-            secure: true,
             sameSite: "strict",
           });
+
         } else {
           self.snackbarText = x.messages;
           self.showSnackbar = true;
@@ -161,14 +163,20 @@ export default {
           this.$refs.otpInput.reset();
           this.$refs.otpInput.focus();
         } else {
+
           const { startLoading } = useLoading();
           startLoading();
+
           if (self.fromPage && self.fromPage.length) {
             const query = { isOpenPaymentModal: true };
-            navigateTo({ path: self.fromPage, query });
-          } else navigateTo(ROUTES.MEMBER.PROFILE);
+            this.$router.push({ path: self.fromPage, query: query })
+          } else this.$router.push("/member/profile");
+
         }
-      });
+      } catch (error) {
+        console.log(error);
+
+      }
     },
     handleClick() {
       switch (this.step) {

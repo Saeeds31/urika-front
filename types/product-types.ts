@@ -40,5 +40,5 @@ export interface ProductGetModel {
   episodes: Episode[];
   total_page: string;
   type: number;
-  origina_file: string;
+  original_path: string;
 }
