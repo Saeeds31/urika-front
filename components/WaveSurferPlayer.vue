@@ -40,7 +40,7 @@ const loadSound = () => {
 
   sound = new Howl({
     src: [props.file],
-    html5: true,       // ← کلید اصلی: stream میکنه، منتظر دانلود کامل نمیمونه
+    html5: true,
     preload: true,
     format: ['mp3'],
     onload: () => {

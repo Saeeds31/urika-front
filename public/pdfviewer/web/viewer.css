@@ -3874,7 +3874,9 @@ dialog :link{
     inset-inline-start:34px;
   }
 }
-
+#secondaryToolbarToggle {
+  display: none !important;
+}
 @media all and (max-width: 560px){
   #scaleSelectContainer{
     display:none;

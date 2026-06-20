@@ -47,6 +47,7 @@ export default {
     const onLoad = () => {
       setTimeout(() => {
         loading.value = false;
+
       }, 1750);
     };
 
@@ -103,11 +104,16 @@ iframe {
 
 .close-btn {
   position: absolute;
-  top: 10px;
-  left: 15px;
+  top: 45px;
+  left: 35px;
   z-index: 10;
   background: transparent;
   border: none;
   cursor: pointer;
+}
+</style>
+<style scoped>
+button#secondaryToolbarToggle {
+  display: none !important;
 }
 </style>
