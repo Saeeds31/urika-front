@@ -1,8 +1,9 @@
-// File: composables/useItemList.ts
-
-import { useState } from "#imports"; // Use Nuxt 3's composables
+// composables/useBottomAudioPlayer.ts
+import { useState, ref, computed } from "#imports";
 import type { BottomAudioModel } from "~/types/bottomAudioModel";
 import { API_ENDPOINTS } from "~/utilities/apiEndpoints";
+import { PRODUCT_TYPES } from "~/utilities/constants";
+
 const emptyBottomAudioModel: BottomAudioModel = {
   contentId: 0,
   episodeId: 0,
@@ -12,199 +13,227 @@ const emptyBottomAudioModel: BottomAudioModel = {
   contentTitle: "",
   episodeTitle: "",
   imageUrl: "",
+  latestPlayedSoccond: 0,
 };
-const playbackRate = ref(1);
-const isInDownloading = ref(false);
-const downloadedPrecent = ref(0);
+
 export default function useBottomAudioPlayer() {
   const bottomAudioComponentModel = useState<BottomAudioModel>(
-    "bottomAudioComponentModel"
+    "bottomAudioComponentModel",
+    () => ({ ...emptyBottomAudioModel }),
   );
+
   const { post } = useCustomFetch();
   const isPaused = ref(true);
-  const lastProductPlayed = ref(null);
+  const isPlaying = ref(false);
   const timerVal = ref(null);
-  const audioUrl = ref(bottomAudioComponentModel?.value?.url);
+  const lastProductPlayed = ref(null);
+  const playerRef = ref(null);
   const playedDuration = ref("00:00");
   const duration = ref("00:00");
-  const waveSurferInstance = ref({});
-  function play() {
-    try {
-      waveSurferInstance.value.play();
-      handlerPlayTime();
-    } catch {}
-  }
-  function pause() {
-    try {
-      waveSurferInstance.value.pause();
-      clearInterval(timerVal.value);
-    } catch {}
-  }
-  const options = {
-    waveColor: "#bbbbbb",
-    progressColor: "#42791282",
-    cursorColor: "#7f7f7fbd",
-    cursorWidth: 2,
-    barWidth: 2,
-    barHeight: 1,
-    responsive: true,
-    height: 40,
-  };
-  const handleProgress = (x) => {
-    isInDownloading.value = true;
+  const currentTime = ref(0);
+  const downloadProgress = ref(0);
+  const isLoading = ref(false);
 
-    downloadedPrecent.value = x;
-    if (x == 100 || x > 100) {
-      setTimeout(() => {
-        isInDownloading.value = false;
-      }, 500);
+  // تابع play رو اصلاح کن
+  function play() {
+    if (playerRef.value) {
+      playerRef.value.play();
     }
-  };
-  const handlePlay = () => {
-    isPaused.value = false;
-  };
-  function updateLastPlayedSeccond(seccond: number) {
-    bottomAudioComponentModel.value.latestPlayedSoccond = seccond;
-    saveInLocalStorage(bottomAudioComponentModel.value);
   }
-  const handlePause = () => {
-    isPaused.value = true;
-  };
+
+  // تابع pause رو اصلاح کن
+  function pause() {
+    if (playerRef.value) {
+      playerRef.value.pause();
+    }
+  }
+
+  function togglePlay() {
+    if (isPlaying.value) {
+      pause();
+    } else {
+      play();
+    }
+  }
+
   function changePlaybackRate(rate: number) {
-    playbackRate.value = rate;
-    try {
-      const audio = waveSurferInstance.value?.getMediaElement?.();
-      if (audio) {
-        audio.playbackRate = rate;
-      }
-    } catch {}
-  }
-  function formatTime(seconds) {
-    const minutes = Math.floor(seconds / 60);
-    const secs = Math.floor(seconds % 60);
-    return `${minutes < 10 ? "0" : ""}${minutes}:${
-      secs < 10 ? "0" : ""
-    }${secs}`;
-  }
-  const handleTimeUpdate = (time) => {
-    if (Math.floor(time) % 2 == 0) {
-      updateLastPlayedSeccond(time);
+    if (playerRef.value) {
+      playerRef.value.setPlaybackRate(rate);
     }
-    playedDuration.value = formatTime(time);
-  };
+  }
+
+  function seekTo(time: number) {
+    if (playerRef.value) {
+      playerRef.value.seekTo(time);
+    }
+  }
+
   function playEpisode(
     productId: number,
     productType: number,
     episodeId: number,
-    latestPlayedSoccond: number = 0
+    latestPlayedSoccond: number = 0,
   ) {
-    downloadedPrecent.value = 0;
-    isInDownloading.value = true;
-    let payload = { id: productId, type: productType, episodeId: episodeId };
-    post(API_ENDPOINTS.getFileToPlayData, payload).then((x) => {
-      let contentType = x?.data?.contentType == 3 ? "audiobooks" : "podcasts";
-      handlerPlayTime(productId, contentType);
-      x.data.contentType = contentType;
-      if (latestPlayedSoccond > 0)
-        x.data.latestPlayedSoccond = latestPlayedSoccond;
-      setCurrentAudio(x?.data);
-    });
-  }
-  const handleReady = (fileDurationAsSecond) => {
-    duration.value = formatTime(fileDurationAsSecond);
-    if (bottomAudioComponentModel.value.latestPlayedSoccond > 2) {
-      setTimeout(() => {
-        waveSurferInstance?.value?.seekTo(
-          bottomAudioComponentModel.value.latestPlayedSoccond /
-            fileDurationAsSecond
-        );
-        playedDuration.value = formatTime(
-          bottomAudioComponentModel.value.latestPlayedSoccond
-        );
-        isInDownloading.value = false;
-      }, 500);
-    } else {
-      setTimeout(() => {
-        play();
-        isInDownloading.value = false;
-      }, 500);
-    }
-    try {
-      const audio = waveSurferInstance.value?.getMediaElement?.();
-      if (audio) {
-        audio.playbackRate = playbackRate.value;
-      }
-    } catch {}
-  };
+    isLoading.value = true;
 
-  const handleWaveSurfer = (ws) => {
-    waveSurferInstance.value = ws;
-  };
-  function setCurrentAudio(model: BottomAudioModel = emptyBottomAudioModel) {
-    isInDownloading.value = true;
-    downloadedPrecent.value = 0;
-    const bottomAudioComponentModel = useState<BottomAudioModel>(
-      "bottomAudioComponentModel"
-    );
+    const payload = {
+      id: productId,
+      type: productType,
+      episodeId: episodeId,
+    };
+
+    post(API_ENDPOINTS.getFileToPlayData, payload)
+      .then((response) => {
+        const data = response?.data;
+        if (!data) return;
+
+        const contentType = data.contentType == 3 ? "audiobooks" : "podcasts";
+        data.contentType = contentType;
+
+        if (latestPlayedSoccond > 0) {
+          data.latestPlayedSoccond = latestPlayedSoccond;
+        }
+
+        setCurrentAudio(data);
+        isLoading.value = false;
+      })
+      .catch(() => {
+        isLoading.value = false;
+      });
+  }
+
+  function setCurrentAudio(model: BottomAudioModel) {
     bottomAudioComponentModel.value = model;
     saveInLocalStorage(model);
-    audioUrl.value = model.url;
+
+    // Reset states
+    currentTime.value = 0;
+    playedDuration.value = "00:00";
+
+    // زمان رو ست کن ولی پخش نکن خودکار
+    if (model.latestPlayedSoccond > 2 && playerRef.value) {
+      // صبر کن تا audio لود بشه بعد seek کن
+      setTimeout(() => {
+        if (playerRef.value) {
+          playerRef.value.seekTo(model.latestPlayedSoccond);
+        }
+      }, 500);
+    }
   }
 
   function closeAudioPlayer() {
     pause();
-    downloadedPrecent.value = 0;
-    const bottomAudioComponentModel = useState<BottomAudioModel>(
-      "bottomAudioComponentModel"
-    );
-    bottomAudioComponentModel.value = emptyBottomAudioModel;
+    bottomAudioComponentModel.value = { ...emptyBottomAudioModel };
     saveInLocalStorage(emptyBottomAudioModel);
-    audioUrl.value = "";
     clearInterval(timerVal.value);
+    lastProductPlayed.value = null;
   }
-  function saveInLocalStorage(model: BottomAudioModel) {
-    window.localStorage.setItem("bottomAudioData", JSON.stringify(model));
+
+  function handlePlayerReady(data: { duration: number }) {
+    duration.value = formatTime(data.duration);
   }
-  function handlerPlayTime(productId = null, contentType = null) {
-    if (lastProductPlayed.value != productId) {
-      lastProductPlayed.value = productId;
-      clearInterval(timerVal.value);
-      timerVal.value = setInterval(() => {
-        let payload = {
-          id: productId,
-        };
-        post(API_ENDPOINTS[contentType].studyTime, payload);
-      }, 60000);
-    } else if (productId == null) {
-      timerVal.value = setInterval(() => {
-        let payload = {
-          id: lastProductPlayed.value,
-        };
-        post(API_ENDPOINTS[contentType].studyTime, payload);
-      }, 60000);
+
+  function handleTimeUpdate(time: number) {
+    currentTime.value = time;
+    playedDuration.value = formatTime(time);
+
+    // Update study time every 60 seconds
+    if (Math.floor(time) % 60 === 0 && time > 0) {
+      updateLastPlayedSeccond(time);
     }
   }
+
+  function updateLastPlayedSeccond(second: number) {
+    bottomAudioComponentModel.value.latestPlayedSoccond = second;
+    saveInLocalStorage(bottomAudioComponentModel.value);
+  }
+
+  function formatTime(seconds: number): string {
+    if (!seconds || isNaN(seconds)) return "00:00";
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${String(mins).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
+  }
+
+  function saveInLocalStorage(model: BottomAudioModel) {
+    try {
+      window.localStorage.setItem("bottomAudioData", JSON.stringify(model));
+    } catch (error) {
+      console.error("Failed to save to localStorage:", error);
+    }
+  }
+
+  function handlePlay() {
+    isPaused.value = false;
+    isPlaying.value = true;
+  }
+
+  function handlePause() {
+    isPaused.value = true;
+    isPlaying.value = false;
+  }
+
+  function handleEnded() {
+    isPlaying.value = false;
+    // Auto-play next episode if available
+    if (bottomAudioComponentModel.value?.nextEpisodeId > 0) {
+      setTimeout(() => {
+        playEpisode(
+          bottomAudioComponentModel.value.contentId,
+          PRODUCT_TYPES[bottomAudioComponentModel.value.contentType]?.id || 0,
+          bottomAudioComponentModel.value.nextEpisodeId,
+        );
+      }, 1000);
+    }
+  }
+
+  function goToNextEpisode() {
+    if (bottomAudioComponentModel.value?.nextEpisodeId > 0) {
+      playEpisode(
+        bottomAudioComponentModel.value.contentId,
+        PRODUCT_TYPES[bottomAudioComponentModel.value.contentType]?.id || 0,
+        bottomAudioComponentModel.value.nextEpisodeId,
+      );
+    }
+  }
+
+  function goToPreviousEpisode() {
+    if (bottomAudioComponentModel.value?.previousEpisodeId > 0) {
+      playEpisode(
+        bottomAudioComponentModel.value.contentId,
+        PRODUCT_TYPES[bottomAudioComponentModel.value.contentType]?.id || 0,
+        bottomAudioComponentModel.value.previousEpisodeId,
+      );
+    }
+  }
+
   return {
-    setCurrentAudio,
-    closeAudioPlayer,
+    // State
     bottomAudioComponentModel,
     isPaused,
-    handleWaveSurfer,
-    handleReady,
-    handleTimeUpdate,
-    handlePause,
-    changePlaybackRate,
-    playbackRate,
-    handlePlay,
-    options,
-    audioUrl,
-    play,
-    pause,
-    handleProgress,
-    isInDownloading,
-    downloadedPrecent,
+    isPlaying,
     playedDuration,
     duration,
+    currentTime,
+    isLoading,
+    downloadProgress,
+    playerRef,
+
+    // Methods
+    play,
+    pause,
+    togglePlay,
+    changePlaybackRate,
+    seekTo,
     playEpisode,
+    setCurrentAudio,
+    closeAudioPlayer,
+    handlePlayerReady,
+    handleTimeUpdate,
+    handlePlay,
+    handlePause,
+    handleEnded,
+    goToNextEpisode,
+    goToPreviousEpisode,
   };
 }
