@@ -1,14 +1,26 @@
-<!-- components/BottomAudio.vue -->
 <template>
-  <div v-motion-fade :duration="700" class="bottom-audio elevation-5" v-if="bottomAudioComponentModel?.contentId > 0">
+  <div
+    v-motion-fade
+    :duration="700"
+    class="bottom-audio elevation-5"
+    v-if="bottomAudioComponentModel?.contentId > 0"
+  >
     <v-container>
-      <!-- پلیر جدید با نمایش مستطیلی -->
-      <BarPlayer ref="playerRef" :audio-url="bottomAudioComponentModel.url" :audio-data="bottomAudioComponentModel"
-        :initial-time="bottomAudioComponentModel.latestPlayedSoccond || 0" @play="handlePlay" @pause="handlePause"
-        @timeupdate="handleTimeUpdate" @ended="handleEnded" @next="goToNextEpisode" @previous="goToPreviousEpisode"
-        @loaded="handlePlayerReady" :key="bottomAudioComponentModel.episodeId" />
+      <BarPlayer
+        ref="playerRef"
+        :audio-url="bottomAudioComponentModel.url"
+        :audio-data="bottomAudioComponentModel"
+        :initial-time="bottomAudioComponentModel.latestPlayedSoccond || 0"
+        @play="handlePlay"
+        @pause="handlePause"
+        @timeupdate="handleTimeUpdate"
+        @ended="handleEnded"
+        @next="goToNextEpisode"
+        @previous="goToPreviousEpisode"
+        @loaded="handlePlayerReady"
+        :key="`${bottomAudioComponentModel.contentId}-${bottomAudioComponentModel.episodeId}`"
+      />
 
-      <!-- دکمه بستن -->
       <div class="close-btn" @click="closeAudioPlayer">
         <v-icon size="18" color="#999">mdi-close</v-icon>
       </div>
@@ -55,20 +67,19 @@
 </style>
 
 <script lang="ts">
-import { defineComponent, ref } from 'vue';
-import useBottomAudioPlayer from '~/composables/useBottomAudioPlayer';
-import { PRODUCT_TYPES } from '~/utilities/constants';
-import type { BottomAudioModel } from '~/types/bottomAudioModel';
+import { defineComponent } from "vue";
+import useBottomAudioPlayer from "~/composables/useBottomAudioPlayer";
 
 export default defineComponent({
-  name: 'BottomAudio',
+  name: "BottomAudio",
 
   setup() {
+    // نکته: useBottomAudioPlayer خودش در onMounted از localStorage می‌خواند.
+    // اینجا فقط مقادیر را از composable می‌گیریم.
     const {
       playerRef,
       bottomAudioComponentModel,
       closeAudioPlayer,
-      playEpisode,
       handlePlay,
       handlePause,
       handleTimeUpdate,
@@ -78,41 +89,10 @@ export default defineComponent({
       goToPreviousEpisode,
     } = useBottomAudioPlayer();
 
-    // بارگذاری از localStorage
-    const loadFromStorage = () => {
-      try {
-        const stored = window.localStorage.getItem('bottomAudioData');
-        if (stored) {
-          const data = JSON.parse(stored) as BottomAudioModel;
-          if (data?.contentId > 0) {
-            bottomAudioComponentModel.value = data;
-
-            // اگر اپیزود قبلی یا بعدی داشت و url خالی بود، دوباره دریافت کن
-            if (!data.url && data.episodeId > 0) {
-              playEpisode(
-                data.contentId,
-                PRODUCT_TYPES[data.contentType]?.id || 0,
-                data.episodeId,
-                data.latestPlayedSoccond || 0
-              );
-            }
-          }
-        }
-      } catch (error) {
-        console.error('Failed to load from localStorage:', error);
-      }
-    };
-
-    // Lifecycle
-    onMounted(() => {
-      loadFromStorage();
-    });
-
     return {
       playerRef,
       bottomAudioComponentModel,
       closeAudioPlayer,
-      playEpisode,
       handlePlay,
       handlePause,
       handleTimeUpdate,
@@ -121,6 +101,6 @@ export default defineComponent({
       goToNextEpisode,
       goToPreviousEpisode,
     };
-  }
+  },
 });
 </script>
