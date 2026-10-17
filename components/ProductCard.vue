@@ -1,7 +1,8 @@
 <template>
-  <v-card
+  <nuxt-link
     :class="'product-card-item ' + className"
-    @click="navigateTo(toUrl)"
+    :to="toUrl"
+    class="text-decoration-none"
     :width="whereRender == 'home' ? '175' : ''"
   >
     <div
@@ -15,7 +16,7 @@
           cover
           :src="PRODUCT_TYPES[productType].iconUrl"
         ></v-img>
-        <p class="font-weight-black mr-1">
+        <p class="font-weight-black mr-1 color-black">
           {{ PRODUCT_TYPES[productType].title }}
         </p>
       </div>
@@ -45,11 +46,11 @@
         <v-skeleton-loader height="100%"></v-skeleton-loader>
       </template>
     </v-img>
-    <v-card-title v-text="product.name"></v-card-title>
+    <v-card-title class="color-black" v-text="product.name"></v-card-title>
     <v-card-subtitle class="authar-name-holder text-black">
       {{ product?.owner?.first_name + " " + product?.owner?.last_name }}
     </v-card-subtitle>
-  </v-card>
+  </nuxt-link>
 </template>
 
 <script>
@@ -125,5 +126,9 @@ export default {
 <style>
 .like-button i {
   color: rgb(var(--v-theme-primary));
+}
+
+.color-black{
+  color: black;
 }
 </style>
