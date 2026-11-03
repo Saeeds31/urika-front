@@ -1,52 +1,25 @@
 <template>
-  <nuxt-link
-    :class="'product-card-item ' + className"
-    :to="toUrl"
-    class="text-decoration-none"
-    :width="whereRender == 'home' ? '175' : ''"
-  >
-    <div
-      class="d-flex mb-3 justify-space-between align-center product-type-absolute"
-      v-if="!hideTypeTitlePrivate"
-    >
+  <nuxt-link :class="'product-card-item ' + className" :to="toUrl" class="text-decoration-none"
+    :width="whereRender == 'home' ? '175' : ''">
+    <div class="d-flex mb-3 justify-space-between align-center product-type-absolute" v-if="!hideTypeTitlePrivate">
       <div class="d-flex align-end opacity-90">
-        <v-img
-          class="opacity-80"
-          width="20"
-          cover
-          :src="PRODUCT_TYPES[productType].iconUrl"
-        ></v-img>
+        <v-img class="opacity-80" width="20" cover :src="PRODUCT_TYPES[productType].iconUrl"></v-img>
         <p class="font-weight-black mr-1 color-black">
           {{ PRODUCT_TYPES[productType].title }}
         </p>
       </div>
     </div>
-    <div
-      class="position-absolute product-like-action"
-      v-if="!hideFavoritePrivate"
-    >
-      <v-btn
-        color="medium-emphasis"
-        class="like-button"
-        :icon="isFavorite ? 'mdi-heart' : 'mdi-heart-outline'"
-        size="small"
-        :loading="isFavoriteButtonInLoading"
-        @click.stop="favorite"
-      ></v-btn>
+    <div class="position-absolute product-like-action" v-if="!hideFavoritePrivate">
+      <v-btn color="medium-emphasis" class="like-button" :icon="isFavorite ? 'mdi-heart' : 'mdi-heart-outline'"
+        size="small" :loading="isFavoriteButtonInLoading" @click.stop="favorite"></v-btn>
     </div>
-    <v-img
-      :src="product.image"
-      class="align-end"
-      gradient="to bottom, rgba(0,0,0,.1), rgba(0,0,0,.8)"
-      height="175px"
-      :width="whereRender == 'home' ? '175' : ''"
-      cover
-    >
+    <v-img :src="product.image" class="align-end" gradient="to bottom, rgba(0,0,0,.1), rgba(0,0,0,.8)" height="175px"
+      :width="whereRender == 'home' ? '175' : ''" cover>
       <template v-slot:placeholder>
         <v-skeleton-loader height="100%"></v-skeleton-loader>
       </template>
     </v-img>
-    <v-card-title class="color-black" v-text="product.name"></v-card-title>
+    <v-card-title class="color-black" v-html="formattedProductName"></v-card-title>
     <v-card-subtitle class="authar-name-holder text-black">
       {{ product?.owner?.first_name + " " + product?.owner?.last_name }}
     </v-card-subtitle>
@@ -110,7 +83,12 @@ export default {
         }
       }
     }
-
+    const formattedProductName = computed(() => {
+      const name = props.product?.name ?? "";
+      const words = name.trim().split(/\s+/);
+      if (words.length <= 4) return name;
+      return words.slice(0, 4).join(" ") + "<br>" + words.slice(4).join(" ");
+    });
     return {
       toUrl,
       PRODUCT_TYPES,
@@ -119,6 +97,7 @@ export default {
       isFavoriteButtonInLoading,
       isFavorite,
       favorite,
+      formattedProductName,
     };
   },
 };
@@ -128,7 +107,19 @@ export default {
   color: rgb(var(--v-theme-primary));
 }
 
-.color-black{
+.color-black {
   color: black;
+}
+
+.product-name-title {
+  white-space: normal;
+  line-height: 1.4;
+}
+
+.product-card-item .v-card-title {
+  font-size: 14px;
+  font-weight: 900;
+  text-align: justify;
+  min-height: 60px;
 }
 </style>
